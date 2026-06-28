@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { sqlite } from "@/lib/db";
+import { neon } from "@neondatabase/serverless";
 import { createSession } from "@/lib/auth";
 import { initDb } from "@/lib/seed";
 
-initDb();
+const sql = neon(process.env.DATABASE_URL!);
+await initDb();
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,37 +15,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
     }
 
-    const user = sqlite.prepare(
-      "SELECT id, username, email, password_hash, is_admin FROM users WHERE email = ?"
-    ).get(email) as {
-      id: number;
-      username: string;
-      email: string;
-      password_hash: string;
-      is_admin: number;
-    } | undefined;
+    const rows = await sql`
+      SELECT id, username, email, password_hash, is_admin
+      FROM users WHERE email = ${email}
+    `;
 
-    if (!user) {
+    if (rows.length === 0) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
+    const user = rows[0];
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
-    const sessionId = createSession(user.id);
-    const isAdmin = user.is_admin === 1;
+    const sessionId = await createSession(user.id);
 
     const response = NextResponse.json({
       user: {
         id: user.id,
         username: user.username,
         email: user.email,
-        isAdmin,
+        isAdmin: user.is_admin,
       },
-      // Tell the frontend where to redirect
-      redirect: isAdmin ? "/admin" : "/",
+      redirect: user.is_admin ? "/admin" : "/",
     });
 
     response.cookies.set("session", sessionId, {
@@ -55,7 +50,8 @@ export async function POST(req: NextRequest) {
     });
 
     return response;
-  } catch {
+  } catch (error) {
+    console.error(error);
     return NextResponse.json({ error: "Login failed" }, { status: 500 });
   }
 }

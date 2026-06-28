@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { sqlite } from "@/lib/db";
+import { neon } from "@neondatabase/serverless";
 import { createSession } from "@/lib/auth";
 import { initDb } from "@/lib/seed";
 
-initDb();
+const sql = neon(process.env.DATABASE_URL!);
+await initDb();
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,21 +24,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
     }
 
-    const existing = sqlite.prepare(
-      "SELECT id FROM users WHERE email = ? OR username = ?"
-    ).get(email, username);
-
-    if (existing) {
+    const existing = await sql`
+      SELECT id FROM users WHERE email = ${email} OR username = ${username}
+    `;
+    if (existing.length > 0) {
       return NextResponse.json({ error: "Email or username already taken" }, { status: 409 });
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const result = sqlite.prepare(
-      "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)"
-    ).run(username, email, passwordHash);
+    const result = await sql`
+      INSERT INTO users (username, email, password_hash)
+      VALUES (${username}, ${email}, ${passwordHash})
+      RETURNING id
+    `;
 
-    const userId = result.lastInsertRowid as number;
-    const sessionId = createSession(userId);
+    const userId = result[0].id;
+    const sessionId = await createSession(userId);
 
     const response = NextResponse.json({
       user: { id: userId, username, email },
@@ -52,6 +54,7 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (error) {
+    console.error(error);
     return NextResponse.json({ error: "Registration failed" }, { status: 500 });
   }
 }

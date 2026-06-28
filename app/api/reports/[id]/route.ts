@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { reports, scamTypes } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { neon } from "@neondatabase/serverless";
 import { initDb } from "@/lib/seed";
 
-initDb();
+const sql = neon(process.env.DATABASE_URL!);
+await initDb();
 
 export async function GET(
   _req: NextRequest,
@@ -12,27 +11,20 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const row = db
-      .select({
-        id: reports.id,
-        title: reports.title,
-        description: reports.description,
-        platform: reports.platform,
-        scamTypeId: reports.scamTypeId,
-        scamTypeName: scamTypes.name,
-        financialLoss: reports.financialLoss,
-        reporterAge: reports.reporterAge,
-        status: reports.status,
-        createdAt: reports.createdAt,
-      })
-      .from(reports)
-      .innerJoin(scamTypes, eq(reports.scamTypeId, scamTypes.id))
-      .where(eq(reports.id, parseInt(id)))
-      .get();
+    const rows = await sql`
+      SELECT r.id, r.title, r.description, r.platform,
+        r.scam_type_id as "scamTypeId", st.name as "scamTypeName",
+        r.financial_loss as "financialLoss", r.reporter_age as "reporterAge",
+        r.status, r.admin_notes as "adminNotes", r.created_at as "createdAt"
+      FROM reports r
+      JOIN scam_types st ON r.scam_type_id = st.id
+      WHERE r.id = ${parseInt(id)}
+    `;
 
-    if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json(row);
-  } catch {
+    if (rows.length === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json(rows[0]);
+  } catch (error) {
+    console.error(error);
     return NextResponse.json({ error: "Failed to fetch report" }, { status: 500 });
   }
 }

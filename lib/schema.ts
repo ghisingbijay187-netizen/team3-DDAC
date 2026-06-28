@@ -1,31 +1,40 @@
 import { sql } from "drizzle-orm";
-import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  integer,
+  numeric,
+  pgTable,
+  real,
+  serial,
+  text,
+  boolean,
+  timestamp,
+} from "drizzle-orm/pg-core";
 
-export const scamTypes = sqliteTable("scam_types", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const scamTypes = pgTable("scam_types", {
+  id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description").notNull(),
   icon: text("icon").notNull(),
   warningSigns: text("warning_signs").notNull().default("[]"),
 });
 
-export const users = sqliteTable("users", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
-  isAdmin: integer("is_admin").notNull().default(0),
-  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  isAdmin: boolean("is_admin").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const sessions = sqliteTable("sessions", {
+export const sessions = pgTable("sessions", {
   id: text("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  expiresAt: text("expires_at").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
 });
 
-export const reports = sqliteTable("reports", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const reports = pgTable("reports", {
+  id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
   platform: text("platform").notNull(),
@@ -35,11 +44,11 @@ export const reports = sqliteTable("reports", {
   reporterAge: text("reporter_age"),
   status: text("status").notNull().default("received"),
   adminNotes: text("admin_notes"),
-  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const tips = sqliteTable("tips", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const tips = pgTable("tips", {
+  id: serial("id").primaryKey(),
   title: text("title").notNull(),
   content: text("content").notNull(),
   category: text("category").notNull(),
