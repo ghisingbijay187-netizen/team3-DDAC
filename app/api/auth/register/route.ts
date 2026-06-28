@@ -5,10 +5,11 @@ import { createSession } from "@/lib/auth";
 import { initDb } from "@/lib/seed";
 
 const sql = neon(process.env.DATABASE_URL!);
-await initDb();
+
 
 export async function POST(req: NextRequest) {
   try {
+    await initDb();
     const { username, email, password } = await req.json();
 
     if (!username || !email || !password) {

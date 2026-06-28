@@ -4,10 +4,11 @@ import { getUserFromRequest } from "@/lib/auth";
 import { initDb } from "@/lib/seed";
 
 const sql = neon(process.env.DATABASE_URL!);
-await initDb();
+
 
 export async function GET(req: NextRequest) {
   try {
+    await initDb();
     const user = await getUserFromRequest(req);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

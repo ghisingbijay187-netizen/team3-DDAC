@@ -3,13 +3,14 @@ import { neon } from "@neondatabase/serverless";
 import { initDb } from "@/lib/seed";
 
 const sql = neon(process.env.DATABASE_URL!);
-await initDb();
+
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await initDb();
     const { id } = await params;
     const rows = await sql`
       SELECT r.id, r.title, r.description, r.platform,

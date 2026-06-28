@@ -3,10 +3,11 @@ import { neon } from "@neondatabase/serverless";
 import { initDb } from "@/lib/seed";
 
 const sql = neon(process.env.DATABASE_URL!);
-await initDb();
+
 
 export async function GET() {
   try {
+    await initDb();
     const [totalRow] = await sql`SELECT COUNT(*) as total, COALESCE(SUM(financial_loss), 0) as loss FROM reports`;
     const [mostCommon] = await sql`
       SELECT st.name FROM reports r

@@ -3,10 +3,11 @@ import { neon } from "@neondatabase/serverless";
 import { initDb } from "@/lib/seed";
 
 const sql = neon(process.env.DATABASE_URL!);
-await initDb();
+
 
 export async function GET() {
   try {
+    await initDb();
     const types = await sql`SELECT * FROM scam_types ORDER BY name`;
     return NextResponse.json(
       types.map((t) => ({ ...t, warningSigns: JSON.parse(t.warning_signs) }))

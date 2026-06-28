@@ -3,10 +3,11 @@ import { neon } from "@neondatabase/serverless";
 import { initDb } from "@/lib/seed";
 
 const sql = neon(process.env.DATABASE_URL!);
-await initDb();
+
 
 export async function GET(req: NextRequest) {
   try {
+    await initDb();
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
 

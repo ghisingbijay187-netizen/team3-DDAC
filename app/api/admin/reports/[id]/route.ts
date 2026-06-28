@@ -4,13 +4,14 @@ import { getUserFromRequest } from "@/lib/auth";
 import { initDb } from "@/lib/seed";
 
 const sql = neon(process.env.DATABASE_URL!);
-await initDb();
+
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await initDb();
     const user = await getUserFromRequest(req);
     if (!user || !user.isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
