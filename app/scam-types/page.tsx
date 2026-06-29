@@ -1,6 +1,7 @@
 import { AlertTriangle, Fish, Heart, TrendingUp, Monitor, Briefcase, Gift } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+export const dynamic = "force-dynamic";
 
 const iconMap: Record<string, any> = {
   fish: Fish,

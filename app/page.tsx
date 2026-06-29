@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ReportCard } from "@/components/report-card";
 import { formatCurrency } from "@/lib/utils";
+export const dynamic = "force-dynamic";
 
 async function getHomeData() {
   try {
